@@ -1,16 +1,23 @@
 import SwiftUI
 
 struct NotRobotGameView: View {
-    let KURO = [
-        "Gorila", "HandMac", "CorrectKURO1",
-        "CorrectKURO2", "CorrectKURO3", "Gassi",
-        "ISU", "Mac", "wall"
-    ]
-    
-    let KUMA = [
-        "Guitar", "CorrectKUMA2", "Tail",
-        "Tissue", "CorrectKURO3", "Yenn",
-        "CorrectKUMA3", "Mike", "CorrectKUMA1"
+    // Mentor（人）ごとに画像リストを紐づける辞書
+    let mentors: [String: [String]] = [
+        "KURO": [
+            "Gorila", "HandMac", "CorrectKURO1",
+            "CorrectKURO2", "CorrectKURO3", "Gassi",
+            "ISU", "Mac", "wall"
+        ],
+        "さわっくま": [
+            "Guitar", "CorrectKUMA2", "Tail",
+            "Tissue", "CorrectKURO3", "Yenn",
+            "CorrectKUMA3", "Mike", "CorrectKUMA1"
+        ],
+        "しばちゃん": [
+            "CorrectShiba1", "CorrectShiba2", "CorrectShiba3",
+        "ItIsMe", "MacPen", "Pen",
+        "Piri", "Umbrella", "CorrectKUMA1"
+        ]
     ]
     
     let columns: [GridItem] = Array(repeating: .init(.flexible()), count: 3)
@@ -22,6 +29,7 @@ struct NotRobotGameView: View {
         VStack {
             Spacer()
             
+
             ZStack {
                 Rectangle()
                     .frame(width: 371, height: 120)
@@ -41,6 +49,7 @@ struct NotRobotGameView: View {
                     .padding(.top, 50)
             }
             
+
             LazyVGrid(columns: columns, spacing: 5) {
                 ForEach(currentImages, id: \.self) { imageName in
                     Image(imageName)
@@ -59,13 +68,10 @@ struct NotRobotGameView: View {
                 
                 HStack {
                     Button(action: {
-
-                        if Bool.random() {
-                            Mentor = "KURO"
-                            currentImages = KURO.shuffled() // 配列をシャッフル
-                        } else {
-                            Mentor = "さわっくま"
-                            currentImages = KUMA.shuffled() // 配列をシャッフル
+                        // Mentor をランダムに選ぶよ
+                        if let randomMentor = mentors.keys.randomElement() {
+                            Mentor = randomMentor
+                            currentImages = mentors[randomMentor]?.shuffled() ?? []
                         }
                     }) {
                         Image(systemName: "arrow.trianglehead.clockwise")
@@ -91,7 +97,11 @@ struct NotRobotGameView: View {
         }
         .padding()
         .onAppear {
-            currentImages = KURO.shuffled()
+            // 初期値として Mentor と対応する画像を設定
+            if let randomMentor = mentors.keys.randomElement() {
+                Mentor = randomMentor
+                currentImages = mentors[randomMentor]?.shuffled() ?? []
+            }
         }
     }
 }
