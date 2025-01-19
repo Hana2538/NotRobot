@@ -15,8 +15,8 @@ struct NotRobotGameView: View {
         ],
         "しばちゃん": [
             "CorrectShiba1", "CorrectShiba2", "CorrectShiba3",
-        "ItIsMe", "MacPen", "Pen",
-        "Piri", "Umbrella", "CorrectKUMA1"
+            "ItIsMe", "MacPen", "Pen",
+            "Piri", "Umbrella", "CorrectKUMA1"
         ]
     ]
     
@@ -24,12 +24,13 @@ struct NotRobotGameView: View {
     
     @State private var Mentor: String = "メンター"
     @State private var currentImages: [String] = []
+    @State private var selectedImages: Set<String> = []
     
     var body: some View {
         VStack {
             Spacer()
             
-
+            
             ZStack {
                 Rectangle()
                     .frame(width: 371, height: 120)
@@ -49,18 +50,44 @@ struct NotRobotGameView: View {
                     .padding(.top, 50)
             }
             
-
+            
             LazyVGrid(columns: columns, spacing: 5) {
                 ForEach(currentImages, id: \.self) { imageName in
-                    Image(imageName)
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: 120, height: 120)
-                        .clipped()
+                    ZStack {
+                        Image(imageName)
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: selectedImages.contains(imageName) ? 90 : 120, // 選択時に小さくする
+                                   height: selectedImages.contains(imageName) ? 90 : 120)
+                            .clipped()
+                            .onTapGesture {
+                                // 画像をタップしたら見た目が切り替わるよ
+                                if selectedImages.contains(imageName) {
+                                    selectedImages.remove(imageName)
+                                } else {
+                                    selectedImages.insert(imageName)
+                                }
+                            }
+                        
+                        if selectedImages.contains(imageName) {
+                            
+                            Circle()
+                                    .fill(Color.blue)
+                                    .frame(width: 30, height: 30)
+                                    .foregroundColor(Color(red: 0.0, green: 0.643, blue: 1.0))
+                                    .offset(x: 35, y: -35)
+                            
+                            
+                            Image(systemName: "checkmark")
+                                .font(.system(size: 20))
+                                .foregroundColor(Color.white)
+                                .offset(x: 35, y: -35) // チェックマークの位置を調整
+                        }
+                    }
                 }
             }
             
-
+            
             ZStack {
                 Rectangle()
                     .frame(width: 371, height: 80)
@@ -68,7 +95,7 @@ struct NotRobotGameView: View {
                 
                 HStack {
                     Button(action: {
-                        // Mentor をランダムに選ぶよ
+                        
                         if let randomMentor = mentors.keys.randomElement() {
                             Mentor = randomMentor
                             currentImages = mentors[randomMentor]?.shuffled() ?? []
