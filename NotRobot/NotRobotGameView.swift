@@ -57,7 +57,7 @@ struct NotRobotGameView: View {
                         Image(imageName)
                             .resizable()
                             .scaledToFill()
-                            .frame(width: selectedImages.contains(imageName) ? 90 : 120, // 選択時に小さくする
+                            .frame(width: selectedImages.contains(imageName) ? 90 : 120, 
                                    height: selectedImages.contains(imageName) ? 90 : 120)
                             .clipped()
                             .onTapGesture {
