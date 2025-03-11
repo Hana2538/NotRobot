@@ -57,7 +57,7 @@ struct NotRobotGameView: View {
                         Image(imageName)
                             .resizable()
                             .scaledToFill()
-                            .frame(width: selectedImages.contains(imageName) ? 90 : 120, 
+                            .frame(width: selectedImages.contains(imageName) ? 90 : 120,
                                    height: selectedImages.contains(imageName) ? 90 : 120)
                             .clipped()
                             .onTapGesture {
@@ -72,10 +72,10 @@ struct NotRobotGameView: View {
                         if selectedImages.contains(imageName) {
                             
                             Circle()
-                                    .fill(Color.blue)
-                                    .frame(width: 30, height: 30)
-                                    .foregroundColor(Color(red: 0.0, green: 0.643, blue: 1.0))
-                                    .offset(x: 35, y: -35)
+                                .fill(Color.blue)
+                                .frame(width: 30, height: 30)
+                                .foregroundColor(Color(red: 0.0, green: 0.643, blue: 1.0))
+                                .offset(x: 35, y: -35)
                             
                             
                             Image(systemName: "checkmark")
@@ -97,9 +97,10 @@ struct NotRobotGameView: View {
                     Button(action: {
                         
                         if let randomMentor = mentors.keys.randomElement() {
-                            Mentor = randomMentor
-                            currentImages = mentors[randomMentor]?.shuffled() ?? []
-                        }
+                                Mentor = randomMentor
+                                currentImages = mentors[randomMentor]?.shuffled() ?? []
+                                selectedImages.removeAll() // チェックマークをリセット
+                            }
                     }) {
                         Image(systemName: "arrow.trianglehead.clockwise")
                             .font(.system(size: 40))
@@ -108,6 +109,25 @@ struct NotRobotGameView: View {
                     .padding(.trailing, 180)
                     
                     Button(action: {
+                        var correctImages: Set<String> = []
+
+                           // メンターごとに正解の画像を設定
+                           if Mentor == "KURO" {
+                               correctImages = Set(["CorrectKURO1", "CorrectKURO2", "CorrectKURO3"])
+                           } else if Mentor == "さわっくま" {
+                               correctImages = Set(["CorrectKUMA1", "CorrectKUMA2", "CorrectKUMA3"])
+                           } else if Mentor == "しばちゃん" {
+                               correctImages = Set(["CorrectShiba1", "CorrectShiba2", "CorrectShiba3"])
+                           }
+                           
+                           // 選択された画像が正解の画像と一致するかを確認
+                           let isCorrect = selectedImages == correctImages
+                           
+                           if isCorrect {
+                               print("正解！")
+                           } else {
+                               print("不正解！")
+                           }
                         print("確認ボタンが押されました")
                     }) {
                         Text("確認")
