@@ -1,4 +1,5 @@
 import SwiftUI
+import AVFoundation
 
 struct NotRobotGameView: View {
     // Mentor（人）ごとに画像リストを紐づける辞書
@@ -20,36 +21,39 @@ struct NotRobotGameView: View {
         ]
     ]
     
+    // メンターの順番リスト
+    let mentorOrder: [String] = ["しばちゃん", "さわっくま", "KURO"]
+    
     let columns: [GridItem] = Array(repeating: .init(.flexible()), count: 3)
     
     @State private var Mentor: String = "メンター"
     @State private var currentImages: [String] = []
     @State private var selectedImages: Set<String> = []
+    @State private var currentMentorIndex: Int = 0 // 現在のメンターのインデックス
+    @State private var statusText: String = "このテストはKUROとさわっくまとしばちゃんの3人のみなので、自分でキリのいいところで終わってください"
     
     var body: some View {
         VStack {
             Spacer()
             
-            
             ZStack {
                 Rectangle()
                     .frame(width: 371, height: 120)
-                    .foregroundColor(Color(red: 0.0, green: 0.643, blue: 1.0))
+                    .foregroundColor(Color.blue)
                 
                 Text("\(Mentor)")
                     .font(.system(size: 35))
                     .fontWeight(.bold)
-                    .foregroundColor(Color.white)
+                    .foregroundColor(.white)
                     .padding(.trailing, 180)
                     .padding(.bottom, 30)
                 
                 Text("の画像をすべて選択してください")
                     .font(.system(size: 20))
-                    .foregroundColor(Color.white)
+                    .foregroundColor(.white)
                     .padding(.trailing, 25)
                     .padding(.top, 50)
             }
-            
             
             LazyVGrid(columns: columns, spacing: 5) {
                 ForEach(currentImages, id: \.self) { imageName in
@@ -61,7 +65,6 @@ struct NotRobotGameView: View {
                                    height: selectedImages.contains(imageName) ? 90 : 120)
                             .clipped()
                             .onTapGesture {
-                                // 画像をタップしたら見た目が切り替わるよ
                                 if selectedImages.contains(imageName) {
                                     selectedImages.remove(imageName)
                                 } else {
@@ -70,85 +73,90 @@ struct NotRobotGameView: View {
                             }
                         
                         if selectedImages.contains(imageName) {
-                            
                             Circle()
                                 .fill(Color.blue)
                                 .frame(width: 30, height: 30)
-                                .foregroundColor(Color(red: 0.0, green: 0.643, blue: 1.0))
                                 .offset(x: 35, y: -35)
-                            
                             
                             Image(systemName: "checkmark")
                                 .font(.system(size: 20))
-                                .foregroundColor(Color.white)
-                                .offset(x: 35, y: -35) // チェックマークの位置を調整
+                                .foregroundColor(.white)
+                                .offset(x: 35, y: -35)
                         }
                     }
                 }
             }
             
-            
             ZStack {
                 Rectangle()
                     .frame(width: 371, height: 80)
-                    .foregroundColor(Color(red: 0.961, green: 0.961, blue: 0.961))
+                    .foregroundColor(.gray.opacity(0.2))
                 
                 HStack {
-                    Button(action: {
-                        
-                        if let randomMentor = mentors.keys.randomElement() {
-                                Mentor = randomMentor
-                                currentImages = mentors[randomMentor]?.shuffled() ?? []
-                                selectedImages.removeAll() // チェックマークをリセット
-                            }
-                    }) {
+                    Button(action: nextQuestion) {
                         Image(systemName: "arrow.trianglehead.clockwise")
                             .font(.system(size: 40))
                             .foregroundColor(.gray)
                     }
                     .padding(.trailing, 180)
                     
-                    Button(action: {
-                        var correctImages: Set<String> = []
-
-                           // メンターごとに正解の画像を設定
-                           if Mentor == "KURO" {
-                               correctImages = Set(["CorrectKURO1", "CorrectKURO2", "CorrectKURO3"])
-                           } else if Mentor == "さわっくま" {
-                               correctImages = Set(["CorrectKUMA1", "CorrectKUMA2", "CorrectKUMA3"])
-                           } else if Mentor == "しばちゃん" {
-                               correctImages = Set(["CorrectShiba1", "CorrectShiba2", "CorrectShiba3"])
-                           }
-                           
-                           // 選択された画像が正解の画像と一致するかを確認
-                           let isCorrect = selectedImages == correctImages
-                           
-                           if isCorrect {
-                               print("正解！")
-                           } else {
-                               print("不正解！")
-                           }
-                        print("確認ボタンが押されました")
-                    }) {
+                    Button(action: checkAnswer) {
                         Text("確認")
                             .font(.system(size: 20))
                             .foregroundColor(.white)
                             .padding()
-                            .background(Color(red: 0.0, green: 0.643, blue: 1.0))
+                            .background(Color.blue)
                             .frame(width: 90)
                     }
                 }
             }
             
+            // ステータス表示
+            Text(statusText)
+                .font(statusText == "ああ、あなたはロボットじゃないですね！" || statusText == "不正解！もしやあなたはロボットですね？" ? .system(size: 24).bold() : .system(size: 16))
+                .foregroundColor(statusText == "ああ、あなたはロボットじゃないですね！" || statusText == "不正解！もしやあなたはロボットですね？" ? .red : .gray)
+                .padding(.top, 20)
+            
+            
             Spacer()
         }
         .padding()
-        .onAppear {
-            // 初期値として Mentor と対応する画像を設定
-            if let randomMentor = mentors.keys.randomElement() {
-                Mentor = randomMentor
-                currentImages = mentors[randomMentor]?.shuffled() ?? []
-            }
+        .onAppear(perform: nextQuestion)
+    }
+    
+    /// **正解・不正解を判定**
+    private func checkAnswer() {
+        var correctImages: Set<String> = []
+        
+        // メンターごとの正解画像をセット
+        if Mentor == "KURO" {
+            correctImages = Set(["CorrectKURO1", "CorrectKURO2", "CorrectKURO3"])
+        } else if Mentor == "さわっくま" {
+            correctImages = Set(["CorrectKUMA1", "CorrectKUMA2", "CorrectKUMA3"])
+        } else if Mentor == "しばちゃん" {
+            correctImages = Set(["CorrectShiba1", "CorrectShiba2", "CorrectShiba3"])
         }
+        
+        let isCorrect = selectedImages == correctImages
+        
+        if isCorrect {
+            statusText = "ああ、あなたはロボットじゃないですね！"
+            
+            // 2秒後に次の問題へ
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                nextQuestion()
+            }
+        } else {
+            statusText = "不正解！もしやあなたはロボットですね？"
+        }
+    }
+    
+    /// **次の問題に進む**
+    private func nextQuestion() {
+        currentMentorIndex = (currentMentorIndex + 1) % mentorOrder.count
+        Mentor = mentorOrder[currentMentorIndex]
+        currentImages = mentors[Mentor]?.shuffled() ?? []
+        selectedImages.removeAll()
+        statusText = "このテストはKUROとさわっくまとしばちゃんの3人のみなので、自分でキリのいいところで終わってください"
     }
 }
